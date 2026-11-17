@@ -103,27 +103,11 @@ public class BillCalculator
     private static double CalculateElectricity(double units, double nightReading,
         Account account, bool isHeatingSeason, bool isNightMeter)
     {
-        double sum;
-        // steps: up to 100 kWh incl. - 2.64, 100-600 - 4.32, over 600 - 6.20
-        if (units <= FirstStepLimit)
-            sum = units * FirstStepRate;
-        else if (units > FirstStepLimit && units <= SecondStepLimit)
-            sum = FirstStepLimit * FirstStepRate
-                + (units - FirstStepLimit) * SecondStepRate;
-        else
-            sum = FirstStepLimit * FirstStepRate
-                + ThirdStepBase * SecondStepRate
-                + (units - ThirdStepOffset) * ThirdStepRate;
+        double sum = CalculateSteppedAmount(units);
         // електроопалення, жовтень-квітень:
         // до 3000 кВт*год - за першим ступенем
         if (account.ElectricHeating && isHeatingSeason)
-        {
-            if (units <= HeatingStepLimit)
-                sum = units * FirstStepRate;
-            else
-                sum = HeatingStepLimit * FirstStepRate
-                    + (units - HeatingStepLimit) * SecondStepRate;
-        }
+            sum = CalculateHeatingAmount(units);
         // 2Z - двозонний, ніч за пів ціни
         if (isNightMeter)
         {
@@ -131,6 +115,45 @@ public class BillCalculator
             sum = sum - nightPart * NightMeterDiscount;
         }
         return sum;
+    }
+
+    // Сходинки тарифу: до 100 кВт*год - 2.64, 100-600 - 4.32, понад 600 - 6.20.
+    private static double CalculateSteppedAmount(double units)
+    {
+        if (IsWithinFirstStep(units))
+            return FirstStepAmount(units);
+        if (IsWithinSecondStep(units))
+            return SecondStepAmount(units);
+        return ThirdStepAmount(units);
+    }
+
+    private static bool IsWithinFirstStep(double units)
+        => units <= FirstStepLimit;
+
+    private static bool IsWithinSecondStep(double units)
+        => units > FirstStepLimit && units <= SecondStepLimit;
+
+    private static bool IsWithinHeatingStep(double units)
+        => units <= HeatingStepLimit;
+
+    private static double FirstStepAmount(double units)
+        => units * FirstStepRate;
+
+    private static double SecondStepAmount(double units)
+        => FirstStepLimit * FirstStepRate
+            + (units - FirstStepLimit) * SecondStepRate;
+
+    private static double ThirdStepAmount(double units)
+        => FirstStepLimit * FirstStepRate
+            + ThirdStepBase * SecondStepRate
+            + (units - ThirdStepOffset) * ThirdStepRate;
+
+    private static double CalculateHeatingAmount(double units)
+    {
+        if (IsWithinHeatingStep(units))
+            return units * FirstStepRate;
+        return HeatingStepLimit * FirstStepRate
+            + (units - HeatingStepLimit) * SecondStepRate;
     }
 
     private static double CalculateGas(double units)
