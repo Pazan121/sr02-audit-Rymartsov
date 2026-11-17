@@ -14,9 +14,11 @@ public class BillCalculator
 
     // Нарахування за одну послугу за місяць, грн.
     // Повертає -1, якщо особового рахунку немає.
+    // Шов для тестів: today підмінює системний годинник, не змінюючи поведінку.
     public double Charge(string accNo, string svc, double prev, double cur, double night,
-        DateTime readAt)
+        DateTime readAt, DateTime? today = null)
     {
+        DateTime now = today ?? DateTime.Today;
         LastSubsidy = 0;
         LastUnits = 0;
         LastNote = "";
@@ -31,7 +33,7 @@ public class BillCalculator
         string s = svc.Trim().ToUpper();
         double u = cur - prev;
         // перевіряємо, чи показник не застарий
-        if ((DateTime.Today - readAt.Date).Days > 45)
+        if ((now.Date - readAt.Date).Days > 45)
         {
             u = NormUnits(s, a.Residents);
             night = 0;
@@ -52,7 +54,7 @@ public class BillCalculator
             // електроопалення, жовтень-квітень:
             // до 3000 кВт*год - за першим ступенем
             if (a.ElectricHeating
-                && (DateTime.Today.Month >= 10 || DateTime.Today.Month <= 4))
+                && (now.Month >= 10 || now.Month <= 4))
             {
                 if (u <= 3000)
                     sum = u * 2.64;
