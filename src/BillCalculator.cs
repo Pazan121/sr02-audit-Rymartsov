@@ -61,8 +61,11 @@ public class BillCalculator
             return -2;
         string service = serviceCode.Trim().ToUpper();
         double units = currentReading - previousReading;
+        bool isStaleReading = (now.Date - readAt.Date).Days > StaleReadingDays;
+        bool isHeatingSeason = now.Month >= 10 || now.Month <= 4;
+        bool isNightMeter = account.MeterType == "2Z" && nightReading > 0;
         // перевіряємо, чи показник не застарий
-        if ((now.Date - readAt.Date).Days > StaleReadingDays)
+        if (isStaleReading)
         {
             units = NormUnits(service, account.Residents);
             nightReading = 0;
@@ -85,8 +88,7 @@ public class BillCalculator
                     + (units - ThirdStepOffset) * ThirdStepRate;
             // електроопалення, жовтень-квітень:
             // до 3000 кВт*год - за першим ступенем
-            if (account.ElectricHeating
-                && (now.Month >= 10 || now.Month <= 4))
+            if (account.ElectricHeating && isHeatingSeason)
             {
                 if (units <= HeatingStepLimit)
                     sum = units * FirstStepRate;
@@ -95,7 +97,7 @@ public class BillCalculator
                         + (units - HeatingStepLimit) * SecondStepRate;
             }
             // 2Z - двозонний, ніч за пів ціни
-            if (account.MeterType == "2Z" && nightReading > 0)
+            if (isNightMeter)
             {
                 double nightPart = sum * nightReading / units;
                 sum = sum - nightPart * NightMeterDiscount;
