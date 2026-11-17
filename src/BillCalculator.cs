@@ -2,124 +2,124 @@ namespace UtilityBills;
 
 public class BillCalculator
 {
-    private BillingRepository repo;
+    private BillingRepository repository;
     public double LastSubsidy;       // субсидія з останнього Charge
     public double LastUnits;         // одиниць у розрахунку
     public string LastNote = "";
 
-    public BillCalculator(BillingRepository repo)
+    public BillCalculator(BillingRepository repository)
     {
-        this.repo = repo;
+        this.repository = repository;
     }
 
     // Нарахування за одну послугу за місяць, грн.
     // Повертає -1, якщо особового рахунку немає.
     // Шов для тестів: today підмінює системний годинник, не змінюючи поведінку.
-    public double Charge(string accNo, string svc, double prev, double cur, double night,
-        DateTime readAt, DateTime? today = null)
+    public double Charge(string accountNumber, string serviceCode, double previousReading,
+        double currentReading, double nightReading, DateTime readAt, DateTime? today = null)
     {
         DateTime now = today ?? DateTime.Today;
         LastSubsidy = 0;
         LastUnits = 0;
         LastNote = "";
-        Account a = repo.FindAccount(accNo);
-        if (a == null)
+        Account account = repository.FindAccount(accountNumber);
+        if (account == null)
         {
-            Console.WriteLine("  [calc] account " + accNo + " not found");
+            Console.WriteLine("  [calc] account " + accountNumber + " not found");
             return -1;
         }
-        if (prev < 0 || cur < 0)
+        if (previousReading < 0 || currentReading < 0)
             return -2;
-        string s = svc.Trim().ToUpper();
-        double u = cur - prev;
+        string service = serviceCode.Trim().ToUpper();
+        double units = currentReading - previousReading;
         // перевіряємо, чи показник не застарий
         if ((now.Date - readAt.Date).Days > 45)
         {
-            u = NormUnits(s, a.Residents);
-            night = 0;
+            units = NormUnits(service, account.Residents);
+            nightReading = 0;
             LastNote = "by norm";
         }
-        LastUnits = u;
+        LastUnits = units;
 
         double sum = 0;
-        if (s == "EL")
+        if (service == "EL")
         {
             // steps: up to 100 kWh incl. - 2.64, 100-600 - 4.32, over 600 - 6.20
-            if (u <= 100)
-                sum = u * 2.64;
-            else if (u > 100 && u <= 600)
-                sum = 100 * 2.64 + (u - 100) * 4.32;
+            if (units <= 100)
+                sum = units * 2.64;
+            else if (units > 100 && units <= 600)
+                sum = 100 * 2.64 + (units - 100) * 4.32;
             else
-                sum = 100 * 2.64 + 500 * 4.32 + (u - 601) * 6.20;
+                sum = 100 * 2.64 + 500 * 4.32 + (units - 601) * 6.20;
             // електроопалення, жовтень-квітень:
             // до 3000 кВт*год - за першим ступенем
-            if (a.ElectricHeating
+            if (account.ElectricHeating
                 && (now.Month >= 10 || now.Month <= 4))
             {
-                if (u <= 3000)
-                    sum = u * 2.64;
+                if (units <= 3000)
+                    sum = units * 2.64;
                 else
-                    sum = 3000 * 2.64 + (u - 3000) * 4.32;
+                    sum = 3000 * 2.64 + (units - 3000) * 4.32;
             }
             // 2Z - двозонний, ніч за пів ціни
-            if (a.MeterType == "2Z" && night > 0)
+            if (account.MeterType == "2Z" && nightReading > 0)
             {
-                double nightPart = sum * night / u;
+                double nightPart = sum * nightReading / units;
                 sum = sum - nightPart * 0.5;
             }
         }
-        else if (s == "GAS")
+        else if (service == "GAS")
         {
-            double gas = u * 7.96;
+            double gas = units * 7.96;
             sum = gas + 37.50;   // + абонплата за розподіл
         }
         else
         {
             // water: cold 30.12 + sewage 21.48 per m3
-            double cold = u * 30.12;
-            double drain = u * 21.48;
+            double cold = units * 30.12;
+            double drain = units * 21.48;
             sum = cold + drain;
         }
-        //if (s == "HEAT")
-        //    sum = a.Area * 41.26;   // з 2023 рахує теплопостачальник
+        //if (service == "HEAT")
+        //    sum = account.Area * 41.26;   // з 2023 рахує теплопостачальник
 
         // пільги: ЧАЕС -50%, УБД і багатодітні -25%
-        if (a.Category == "CHN")
+        if (account.Category == "CHN")
             sum = sum * 0.5;
-        else if (a.Category == "VET" || a.Category == "LRG")
+        else if (account.Category == "VET" || account.Category == "LRG")
             sum = sum * 0.75;
         double subsidy = 0;
-        if (a.SubsidyCap > 0 && sum > a.SubsidyCap)
+        if (account.SubsidyCap > 0 && sum > account.SubsidyCap)
         {
-            subsidy = sum - a.SubsidyCap;
-            sum = a.SubsidyCap;
+            subsidy = sum - account.SubsidyCap;
+            sum = account.SubsidyCap;
         }
         LastSubsidy = Math.Round(subsidy, 2);
         sum = Math.Round(sum, 2);
-        AuditLog.Write("charge " + accNo + " " + s + " units=" + u + " sum=" + sum
+        AuditLog.Write("charge " + accountNumber + " " + service + " units=" + units + " sum=" + sum
             + " subsidy=" + LastSubsidy);
         return sum;
     }
 
     // норма на місяць, якщо показник не передали
-    public double NormUnits(string s, int residents)
+    public double NormUnits(string service, int residents)
     {
-        if (s == "EL")
+        if (service == "EL")
             return 70 + 30 * (residents - 1);
-        if (s == "GAS")
+        if (service == "GAS")
             return 9.8 * residents;
         return 2.4 * residents;   // вода
     }
 
     // пеня 0.1% за день, не більше 10% суми
-    public double calcPenalty(Bill b)
+    public double CalcPenalty(Bill bill)
     {
-        if (b.Status != BillStatus.Overdue || b.Amount <= 0)
+        if (bill.Status != BillStatus.Overdue || bill.Amount <= 0)
             return 0;
-        int days = (DateTime.Today - b.DueDate.Date).Days;
-        double p = b.Amount * 0.001 * days;
-        if (p > b.Amount * 0.1)
-            p = b.Amount * 0.1;
-        return Math.Round(p, 2);
+        int daysOverdue = (DateTime.Today - bill.DueDate.Date).Days;
+        double penalty = bill.Amount * 0.001 * daysOverdue;
+        if (penalty > bill.Amount * 0.1)
+            penalty = bill.Amount * 0.1;
+        return Math.Round(penalty, 2);
     }
 }

@@ -120,7 +120,7 @@ public class BillingService
                 cnt++;
             }
             if (b.Status == BillStatus.Overdue)
-                b.Penalty = calc.calcPenalty(b);
+                b.Penalty = calc.CalcPenalty(b);
         }
         return cnt;
     }
