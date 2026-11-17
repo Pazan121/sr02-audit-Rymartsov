@@ -2,10 +2,20 @@ namespace UtilityBills;
 
 public class BillingRepository
 {
-    public static int nextBillNo = 5001;
+    private static int nextBillNo = 5001;
 
-    public List<Account> Accounts = new List<Account>();
-    public List<Bill> Bills = new List<Bill>();
+    private readonly List<Account> accounts = new List<Account>();
+    private readonly List<Bill> bills = new List<Bill>();
+
+    // R13: колекції тільки для читання, змінювати їх можна лише методами репозиторію
+    public IReadOnlyList<Account> Accounts => accounts;
+    public IReadOnlyList<Bill> Bills => bills;
+
+    public void AddBill(Bill bill)
+    {
+        bill.Number = nextBillNo++;
+        bills.Add(bill);
+    }
 
     public BillingRepository()
     {
@@ -32,14 +42,13 @@ public class BillingRepository
         a.MeterType = meter;
         a.ElectricHeating = eheat;
         a.SubsidyCap = cap;
-        Accounts.Add(a);
+        accounts.Add(a);
     }
 
     private void SeedBill(string acc, string svc, double units, double amount, BillStatus st,
         int dueIn)
     {
         Bill b = new Bill();
-        b.Number = nextBillNo++;
         b.AccountNo = acc;
         b.Service = svc;
         b.Units = units;
@@ -49,12 +58,12 @@ public class BillingRepository
         b.IssuedOn = b.DueDate.AddDays(-20);
         if (st == BillStatus.Paid)
             b.PaidSum = amount;
-        Bills.Add(b);
+        AddBill(b);
     }
 
     public Account FindAccount(string no)
     {
-        foreach (Account a in Accounts)
+        foreach (Account a in accounts)
         {
             if (a.Number == no)
                 return a;
@@ -64,7 +73,7 @@ public class BillingRepository
 
     public Bill FindBill(int no)
     {
-        foreach (Bill b in Bills)
+        foreach (Bill b in bills)
         {
             if (b.Number == no)
                 return b;

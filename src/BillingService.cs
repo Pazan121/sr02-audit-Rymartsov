@@ -36,7 +36,6 @@ public class BillingService
             return null;
         }
         Bill b = new Bill();
-        b.Number = BillingRepository.nextBillNo++;
         b.AccountNo = accNo;
         b.Service = svc;
         b.PrevReading = prev;
@@ -45,7 +44,7 @@ public class BillingService
         b.Amount = amt;
         b.Subsidy = calc.LastSubsidy;
         b.Note = calc.LastNote;
-        repo.Bills.Add(b);
+        repo.AddBill(b);
         if (issueNow)
             ChangeStatus(b.Number, BillStatus.Issued);
         return b;

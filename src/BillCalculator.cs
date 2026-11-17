@@ -9,9 +9,10 @@ public class BillCalculator
     private const double PenaltyCapShare = 0.1;
 
     private BillingRepository repository;
-    public double LastSubsidy;       // субсидія з останнього Charge
-    public double LastUnits;         // одиниць у розрахунку
-    public string LastNote = "";
+    // R13: результати останнього Charge доступні лише для читання
+    public double LastSubsidy { get; private set; }   // субсидія з останнього Charge
+    public double LastUnits { get; private set; }     // одиниць у розрахунку
+    public string LastNote { get; private set; } = "";
 
     public BillCalculator(BillingRepository repository)
     {
