@@ -134,14 +134,8 @@ public class BillingService
             return false;
         if (b.Status == BillStatus.Paid || b.Status == BillStatus.Cancelled)
             return false;
-        double sum = 0;
+        double sum = ElectricityTariff.Calculate(u);
         Account a = repo.FindAccount(b.AccountNo);
-        if (u <= 100)
-            sum = u * 2.64;
-        else if (u > 100 && u <= 600)
-            sum = 100 * 2.64 + (u - 100) * 4.32;
-        else
-            sum = 100 * 2.64 + 500 * 4.32 + (u - 601) * 6.20;
         if (a.Category == "CHN")
             sum = sum * 0.5;
         else if (a.Category == "VET" || a.Category == "LRG")

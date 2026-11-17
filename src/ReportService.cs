@@ -37,14 +37,7 @@ public class ReportService
             Console.WriteLine("  forecast: no account " + accNo);
             return;
         }
-        double sum = 0;
-        double u = kwh;
-        if (u <= 100)
-            sum = u * 2.64;
-        else if (u > 100 && u <= 600)
-            sum = 100 * 2.64 + (u - 100) * 4.32;
-        else
-            sum = 100 * 2.64 + 500 * 4.32 + (u - 601) * 6.20;
+        double sum = ElectricityTariff.Calculate(kwh);
         Console.WriteLine("  forecast " + a.Number + ", " + kwh + " kWh: about "
             + Math.Round(sum, 2) + " UAH");
         if (a.Category != "STD")
