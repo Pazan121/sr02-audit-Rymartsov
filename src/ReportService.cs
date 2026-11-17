@@ -18,15 +18,10 @@ public class ReportService
             return;
         }
         Account a = repo.FindAccount(b.AccountNo);
-        string who = "?";
-        try
-        {
-            who = a.Owner + " (" + CategoryName(a.Category) + ")";
-        }
-        catch (NullReferenceException)
-        {
-            // тимчасово: особовий закрили - без власника
-        }
+        // запобіжна умова замість try/catch: особовий рахунок могли закрити
+        string who = a == null
+            ? "?"
+            : a.Owner + " (" + CategoryName(a.Category) + ")";
         Console.WriteLine("  bill " + b.Number + ", " + who + ", " + b.Service + " " + b.Units);
         Console.WriteLine("    amount " + b.Amount + ", subsidy " + b.Subsidy + ", penalty "
             + b.Penalty + ", paid " + b.PaidSum);
