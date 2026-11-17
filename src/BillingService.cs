@@ -109,6 +109,14 @@ public class BillingService
     // прострочені - термін оплати вже минув
     public int RefreshOverdue()
     {
+        int marked = MarkOverdueBills();
+        RecalculatePenalties();
+        return marked;
+    }
+
+    // R16: два проходи замість одного змішаного циклу - спочатку стани, потім пеня
+    private int MarkOverdueBills()
+    {
         int cnt = 0;
         foreach (Bill b in repo.Bills)
         {
@@ -117,10 +125,17 @@ public class BillingService
                 b.Status = BillStatus.Overdue;
                 cnt++;
             }
+        }
+        return cnt;
+    }
+
+    private void RecalculatePenalties()
+    {
+        foreach (Bill b in repo.Bills)
+        {
             if (b.Status == BillStatus.Overdue)
                 b.Penalty = calc.CalcPenalty(b);
         }
-        return cnt;
     }
 
     // перерахунок після повірки лічильника (EL)
