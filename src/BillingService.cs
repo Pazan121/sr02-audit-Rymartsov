@@ -51,27 +51,25 @@ public class BillingService
         return b;
     }
 
+    // Таблиця дозволених переходів станів рахунку.
+    private static readonly HashSet<(BillStatus From, BillStatus To)> AllowedTransitions =
+        new HashSet<(BillStatus From, BillStatus To)>
+        {
+            (BillStatus.Draft, BillStatus.Issued),
+            (BillStatus.Draft, BillStatus.Cancelled),
+            (BillStatus.Issued, BillStatus.Paid),
+            (BillStatus.Issued, BillStatus.Overdue),
+            (BillStatus.Issued, BillStatus.Cancelled),
+            (BillStatus.Overdue, BillStatus.Paid),
+        };
+
     // Draft -> Issued/Cancelled, Issued -> Paid/Overdue/Cancelled, Overdue -> Paid
     public bool ChangeStatus(int no, BillStatus to)
     {
         Bill b = repo.FindBill(no);
         if (b == null)
             return false;
-        bool ok = false;   // Paid, Cancelled - кінцеві
-        switch (b.Status)
-        {
-            case BillStatus.Draft:
-                ok = to == BillStatus.Issued || to == BillStatus.Cancelled;
-                break;
-            case BillStatus.Issued:
-                ok = to == BillStatus.Paid || to == BillStatus.Overdue
-                    || to == BillStatus.Cancelled;
-                break;
-            case BillStatus.Overdue:
-                ok = to == BillStatus.Paid;
-                break;
-        }
-        if (!ok)
+        if (!IsTransitionAllowed(b.Status, to))
         {
             Console.WriteLine("  ! bill " + b.Number + ": " + b.Status + " -> " + to
                 + " not allowed");
@@ -152,5 +150,10 @@ public class BillingService
         b.Note = "corrected";
         AuditLog.Write("correction " + no + " -> " + b.Amount);
         return true;
+    }
+
+    private static bool IsTransitionAllowed(BillStatus from, BillStatus to)
+    {
+        return AllowedTransitions.Contains((from, to));
     }
 }
