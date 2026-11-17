@@ -97,7 +97,8 @@ public class BillingService
         if (b.IsOpen())
         {
             b.PaidSum = Math.Round(b.PaidSum + amount, 2);
-            if (b.PaidSum >= b.Amount + b.Penalty)
+            // R15: замість повторного виразу Amount + Penalty питаємо сам рахунок
+            if (b.ToPay() <= 0)
                 return ChangeStatus(no, BillStatus.Paid);
             return true;
         }
