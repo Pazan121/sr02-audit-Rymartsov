@@ -73,56 +73,19 @@ public class BillCalculator
         }
         LastUnits = units;
 
-        double sum = 0;
+        double sum;
         if (service == "EL")
-        {
-            // steps: up to 100 kWh incl. - 2.64, 100-600 - 4.32, over 600 - 6.20
-            if (units <= FirstStepLimit)
-                sum = units * FirstStepRate;
-            else if (units > FirstStepLimit && units <= SecondStepLimit)
-                sum = FirstStepLimit * FirstStepRate
-                    + (units - FirstStepLimit) * SecondStepRate;
-            else
-                sum = FirstStepLimit * FirstStepRate
-                    + ThirdStepBase * SecondStepRate
-                    + (units - ThirdStepOffset) * ThirdStepRate;
-            // електроопалення, жовтень-квітень:
-            // до 3000 кВт*год - за першим ступенем
-            if (account.ElectricHeating && isHeatingSeason)
-            {
-                if (units <= HeatingStepLimit)
-                    sum = units * FirstStepRate;
-                else
-                    sum = HeatingStepLimit * FirstStepRate
-                        + (units - HeatingStepLimit) * SecondStepRate;
-            }
-            // 2Z - двозонний, ніч за пів ціни
-            if (isNightMeter)
-            {
-                double nightPart = sum * nightReading / units;
-                sum = sum - nightPart * NightMeterDiscount;
-            }
-        }
+            sum = CalculateElectricity(units, nightReading, account,
+                isHeatingSeason, isNightMeter);
         else if (service == "GAS")
-        {
-            double gas = units * GasRate;
-            sum = gas + GasDistributionFee;   // + абонплата за розподіл
-        }
+            sum = CalculateGas(units);
         else
-        {
-            // water: cold 30.12 + sewage 21.48 per m3
-            double cold = units * ColdWaterRate;
-            double drain = units * SewageRate;
-            sum = cold + drain;
-        }
+            sum = CalculateWater(units);
         //if (service == "HEAT")
         //    sum = account.Area * 41.26;   // з 2023 рахує теплопостачальник
 
         // пільги: ЧАЕС -50%, УБД і багатодітні -25%
-        if (account.Category == "CHN")
-            sum = sum * ChornobylDiscount;
-        else if (account.Category == "VET" || account.Category == "LRG")
-            sum = sum * StandardBenefitDiscount;
+        sum = ApplyBenefit(account, sum);
         double subsidy = 0;
         if (account.SubsidyCap > 0 && sum > account.SubsidyCap)
         {
@@ -133,6 +96,63 @@ public class BillCalculator
         sum = Math.Round(sum, 2);
         AuditLog.Write("charge " + accountNumber + " " + service + " units=" + units + " sum=" + sum
             + " subsidy=" + LastSubsidy);
+        return sum;
+    }
+
+    // Нарахування за електрику: сходинки, електроопалення, нічний тариф.
+    private static double CalculateElectricity(double units, double nightReading,
+        Account account, bool isHeatingSeason, bool isNightMeter)
+    {
+        double sum;
+        // steps: up to 100 kWh incl. - 2.64, 100-600 - 4.32, over 600 - 6.20
+        if (units <= FirstStepLimit)
+            sum = units * FirstStepRate;
+        else if (units > FirstStepLimit && units <= SecondStepLimit)
+            sum = FirstStepLimit * FirstStepRate
+                + (units - FirstStepLimit) * SecondStepRate;
+        else
+            sum = FirstStepLimit * FirstStepRate
+                + ThirdStepBase * SecondStepRate
+                + (units - ThirdStepOffset) * ThirdStepRate;
+        // електроопалення, жовтень-квітень:
+        // до 3000 кВт*год - за першим ступенем
+        if (account.ElectricHeating && isHeatingSeason)
+        {
+            if (units <= HeatingStepLimit)
+                sum = units * FirstStepRate;
+            else
+                sum = HeatingStepLimit * FirstStepRate
+                    + (units - HeatingStepLimit) * SecondStepRate;
+        }
+        // 2Z - двозонний, ніч за пів ціни
+        if (isNightMeter)
+        {
+            double nightPart = sum * nightReading / units;
+            sum = sum - nightPart * NightMeterDiscount;
+        }
+        return sum;
+    }
+
+    private static double CalculateGas(double units)
+    {
+        double gas = units * GasRate;
+        return gas + GasDistributionFee;   // + абонплата за розподіл
+    }
+
+    private static double CalculateWater(double units)
+    {
+        // water: cold 30.12 + sewage 21.48 per m3
+        double cold = units * ColdWaterRate;
+        double drain = units * SewageRate;
+        return cold + drain;
+    }
+
+    private static double ApplyBenefit(Account account, double sum)
+    {
+        if (account.Category == "CHN")
+            return sum * ChornobylDiscount;
+        if (account.Category == "VET" || account.Category == "LRG")
+            return sum * StandardBenefitDiscount;
         return sum;
     }
 
