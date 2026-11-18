@@ -1,0 +1,58 @@
+﻿=== Zelenyi Hai housing co-op - utility billing ===
+accounts 5, bills 3
+-- electricity steps, UB-1001 (single zone)
+  80 kWh: 211,2
+  100 kWh: 264
+  350 kWh: 1344
+  600 kWh: 2424
+  601 kWh: 2424
+  750 kWh: 3347,8
+-- other charges
+  UB-1002 EL 150 kWh: 360
+  UB-1005 EL 300, night 120: 250, subsidy 201,2
+  UB-1001 GAS 45 m3: 395,7
+  UB-1003 WATER 18 m3: 600, subsidy 96,6
+  UB-1002 EL, 60 days old: 138,6 (by norm)
+  UB-1001 EL 5000 -> 4980: -52,8
+  [calc] account UB-9999 not found
+  UB-9999 EL: -1
+  UB-1001 EL 100 -> -5: -2
+-- bills
+  created 5004 UB-1001 EL: 240 units, 868,8 UAH, Draft
+  ! bill 5004 is Draft, payment rejected
+  pay draft 5004: refused
+  issue 5004: ok
+  pay 500 of 5004: ok
+  pay 368.8 of 5004: ok
+  ! bill 5004: Paid -> Issued not allowed
+  issue paid 5004: refused
+  created 5005 UB-1003 WATER: 18 units, 600 UAH, Issued
+  created 5006 UB-1005 EL: 300 units, 250 UAH, Draft
+  cancel 5006: ok
+  ! bill 5006 is Cancelled, payment rejected
+  pay cancelled 5006: refused
+  [calc] account UB-7777 not found
+  not created: account UB-7777 not found
+  not created: unknown service HEAT
+  not created: invalid meter reading
+  status of bill 424242: refused
+-- overdue check
+  marked overdue: 2
+  bill 5001, Mykola Shevchenko (combat veteran -25%), EL 120
+    amount 262,8, subsidy 0, penalty 1,05, paid 0
+    to pay 263,85, Overdue
+  bill 5002, Tetiana Bondarenko (large family -25%), WATER 16
+    amount 600, subsidy 0, penalty 0, paid 0
+    to pay 600, Overdue
+  correct 5001 to 110 kWh: ok
+  bill 5001, Mykola Shevchenko (combat veteran -25%), EL 110
+    amount 230,4, subsidy 0, penalty 1,05, paid 0
+    to pay 231,45, Overdue
+  correct water bill 5002: refused
+  pay 5002 in full: ok
+  bill 424242: not found
+-- hotline forecast
+  forecast UB-1002, 250 kWh: about 912 UAH
+    (combat veteran -25% not included)
+  forecast UB-1004, 650 kWh: about 2727,8 UAH
+  forecast: no account UB-0000
