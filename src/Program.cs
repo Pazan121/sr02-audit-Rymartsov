@@ -34,15 +34,7 @@ public class Program
     static double Charge(string acc, string svc, double prev, double cur, double night,
         DateTime readAt)
     {
-        return calc.Charge(new ChargeRequest
-        {
-            AccountNumber = acc,
-            ServiceCode = svc,
-            PreviousReading = prev,
-            CurrentReading = cur,
-            NightReading = night,
-            ReadAt = readAt
-        });
+        return calc.Charge(new ChargeRequest(acc, svc, prev, cur, night, readAt));
     }
 
     static void Show(string what, double amount)    {

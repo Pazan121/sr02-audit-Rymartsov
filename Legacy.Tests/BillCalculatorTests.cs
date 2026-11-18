@@ -23,14 +23,8 @@ public class BillCalculatorTests
     private static double Charge(BillCalculator calc, string acc, string svc, double prev,
         double cur, double night, DateTime readAt, DateTime? today = null)
     {
-        return calc.Charge(new ChargeRequest
+        return calc.Charge(new ChargeRequest(acc, svc, prev, cur, night, readAt)
         {
-            AccountNumber = acc,
-            ServiceCode = svc,
-            PreviousReading = prev,
-            CurrentReading = cur,
-            NightReading = night,
-            ReadAt = readAt,
             Today = today
         });
     }
