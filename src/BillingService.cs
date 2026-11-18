@@ -2,7 +2,6 @@ namespace UtilityBills;
 
 public class BillingService
 {
-    public static bool SmsEnabled = false;   // SMS gateway contract ended in 2022
     private BillingRepository repo;
     private BillCalculator calc;
     public string LastError;
@@ -78,8 +77,6 @@ public class BillingService
         {
             b.IssuedOn = DateTime.Today;
             b.DueDate = DateTime.Today.AddDays(20);
-            if (SmsEnabled)
-                Console.WriteLine("  sms to " + b.AccountNo + ": new bill " + b.Number);
         }
         if (to == BillStatus.Paid)
             b.PaidOn = DateTime.Today;

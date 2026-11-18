@@ -59,8 +59,6 @@ public class BillCalculator
             sum = GasTariff.Calculate(units);
         else
             sum = WaterTariff.Calculate(units);
-        //if (service == "HEAT")
-        //    sum = account.Area * 41.26;   // з 2023 рахує теплопостачальник
 
         // пільги: ЧАЕС -50%, УБД і багатодітні -25%
         sum = ApplyBenefit(account, sum);
