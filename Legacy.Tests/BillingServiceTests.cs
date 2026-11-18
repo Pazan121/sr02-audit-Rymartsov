@@ -19,9 +19,14 @@ public class BillingServiceTests
         return new BillingService(repo);
     }
 
-    private static Bill NewDraft(BillingService billing, bool issueNow = false)
+    private static Bill NewDraft(BillingService billing)
     {
-        return billing.CreateBill("UB-1001", "EL", 12000, 12240, 0, Yesterday, issueNow);
+        return billing.CreateDraftBill("UB-1001", "EL", 12000, 12240, 0, Yesterday);
+    }
+
+    private static Bill NewIssued(BillingService billing)
+    {
+        return billing.CreateIssuedBill("UB-1001", "EL", 12000, 12240, 0, Yesterday);
     }
 
     [Fact]
@@ -43,7 +48,7 @@ public class BillingServiceTests
     {
         var billing = NewService(out _);
 
-        var bill = billing.CreateBill("UB-1001", "HEAT", 0, 40, 0, Yesterday, false);
+        var bill = billing.CreateDraftBill("UB-1001", "HEAT", 0, 40, 0, Yesterday);
 
         Assert.Null(bill);
         Assert.Contains("unknown service", billing.LastError);
@@ -54,7 +59,7 @@ public class BillingServiceTests
     {
         var billing = NewService(out _);
 
-        var bill = billing.CreateBill("UB-7777", "GAS", 0, 10, 0, Yesterday, false);
+        var bill = billing.CreateDraftBill("UB-7777", "GAS", 0, 10, 0, Yesterday);
 
         Assert.Null(bill);
         Assert.Contains("not found", billing.LastError);
@@ -65,7 +70,7 @@ public class BillingServiceTests
     {
         var billing = NewService(out _);
 
-        var bill = billing.CreateBill("UB-1002", "EL", 8650, -10, 0, Yesterday, false);
+        var bill = billing.CreateDraftBill("UB-1002", "EL", 8650, -10, 0, Yesterday);
 
         Assert.Null(bill);
         Assert.Contains("invalid meter reading", billing.LastError);
@@ -101,7 +106,7 @@ public class BillingServiceTests
     public void ChangeStatus_ОплаченийВВиданий_Заборонено()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
         billing.ChangeStatus(bill.Number, BillStatus.Paid);
 
         bool ok = billing.ChangeStatus(bill.Number, BillStatus.Issued);
@@ -114,7 +119,7 @@ public class BillingServiceTests
     public void ChangeStatus_ВиданийВСкасований_Дозволено()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
 
         bool ok = billing.ChangeStatus(bill.Number, BillStatus.Cancelled);
 
@@ -126,7 +131,7 @@ public class BillingServiceTests
     public void ChangeStatus_ПростроченийВОплачений_Дозволено()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
         bill.Status = BillStatus.Overdue;
 
         bool ok = billing.ChangeStatus(bill.Number, BillStatus.Paid);
@@ -149,7 +154,7 @@ public class BillingServiceTests
     public void Pay_ЧастковаОплата_РахунокЛишаєтьсяВідкритим()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
 
         bool ok = billing.Pay(bill.Number, 500);
 
@@ -162,7 +167,7 @@ public class BillingServiceTests
     public void Pay_ПовнаОплата_ЗакриваєРахунок()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
         billing.Pay(bill.Number, 500);
 
         bool ok = billing.Pay(bill.Number, 368.80);
@@ -188,7 +193,7 @@ public class BillingServiceTests
     public void Pay_НевідємнаСума_ОплатуВідхилено()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
 
         bool ok = billing.Pay(bill.Number, 0);
 
@@ -199,7 +204,7 @@ public class BillingServiceTests
     public void RefreshOverdue_МинулийТермін_ПозначаєПростроченим()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
         bill.DueDate = DateTime.Today.AddDays(-3);
 
         billing.RefreshOverdue();
@@ -213,7 +218,7 @@ public class BillingServiceTests
     public void RefreshOverdue_ОплаченийРахунок_НеЧіпає()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
         billing.ChangeStatus(bill.Number, BillStatus.Paid);
         bill.DueDate = DateTime.Today.AddDays(-30);
 
@@ -228,7 +233,7 @@ public class BillingServiceTests
     {
         // 100 * 2.64 + 10 * 4.32 = 307.20; УБД -25% -> 230.40.
         var billing = NewService(out var repo);
-        var bill = billing.CreateBill("UB-1002", "EL", 8650, 8800, 0, Yesterday, true);
+        var bill = billing.CreateIssuedBill("UB-1002", "EL", 8650, 8800, 0, Yesterday);
 
         bool ok = billing.CorrectBill(bill.Number, 110);
 
@@ -242,7 +247,7 @@ public class BillingServiceTests
     public void CorrectBill_Вода_Відхиляється()
     {
         var billing = NewService(out _);
-        var bill = billing.CreateBill("UB-1003", "WATER", 912, 930, 0, Yesterday, true);
+        var bill = billing.CreateIssuedBill("UB-1003", "WATER", 912, 930, 0, Yesterday);
 
         bool ok = billing.CorrectBill(bill.Number, 10);
 
@@ -253,7 +258,7 @@ public class BillingServiceTests
     public void CorrectBill_ОплаченийРахунок_Відхиляється()
     {
         var billing = NewService(out _);
-        var bill = NewDraft(billing, issueNow: true);
+        var bill = NewIssued(billing);
         billing.ChangeStatus(bill.Number, BillStatus.Paid);
 
         bool ok = billing.CorrectBill(bill.Number, 110);

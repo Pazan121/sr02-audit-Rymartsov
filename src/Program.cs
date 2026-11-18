@@ -64,19 +64,19 @@ public class Program
     static void BillFlow(DateTime y)
     {
         Console.WriteLine("-- bills");
-        int b1 = Created(billing.CreateBill("UB-1001", "EL", 12000, 12240, 0, y, false));
+        int b1 = Created(billing.CreateDraftBill("UB-1001", "EL", 12000, 12240, 0, y));
         Step("pay draft " + b1, billing.Pay(b1, 868.8));
         Step("issue " + b1, billing.ChangeStatus(b1, BillStatus.Issued));
         Step("pay 500 of " + b1, billing.Pay(b1, 500));
         Step("pay 368.8 of " + b1, billing.Pay(b1, 368.8));
         Step("issue paid " + b1, billing.ChangeStatus(b1, BillStatus.Issued));
-        Created(billing.CreateBill("UB-1003", "WATER", 912, 930, 0, y, true));
-        int b3 = Created(billing.CreateBill("UB-1005", "EL", 7700, 8000, 120, y, false));
+        Created(billing.CreateIssuedBill("UB-1003", "WATER", 912, 930, 0, y));
+        int b3 = Created(billing.CreateDraftBill("UB-1005", "EL", 7700, 8000, 120, y));
         Step("cancel " + b3, billing.ChangeStatus(b3, BillStatus.Cancelled));
         Step("pay cancelled " + b3, billing.Pay(b3, 100));
-        Created(billing.CreateBill("UB-7777", "GAS", 0, 10, 0, y, false));
-        Created(billing.CreateBill("UB-1004", "HEAT", 0, 40, 0, y, false));
-        Created(billing.CreateBill("UB-1002", "EL", 8650, -10, 0, y, false));
+        Created(billing.CreateDraftBill("UB-7777", "GAS", 0, 10, 0, y));
+        Created(billing.CreateDraftBill("UB-1004", "HEAT", 0, 40, 0, y));
+        Created(billing.CreateDraftBill("UB-1002", "EL", 8650, -10, 0, y));
         Step("status of bill 424242", billing.ChangeStatus(424242, BillStatus.Paid));
     }
 

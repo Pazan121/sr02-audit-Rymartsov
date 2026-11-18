@@ -13,8 +13,24 @@ public class BillingService
     }
 
     // новий рахунок (Draft) за показниками лічильника
-    public Bill CreateBill(string accNo, string svc, double prev, double cur, double night,
-        DateTime readAt, bool issueNow)
+    public Bill CreateDraftBill(string accNo, string svc, double prev, double cur,
+        double night, DateTime readAt)
+    {
+        return CreateBillCore(accNo, svc, prev, cur, night, readAt);
+    }
+
+    // той самий рахунок, одразу виданий платнику
+    public Bill CreateIssuedBill(string accNo, string svc, double prev, double cur,
+        double night, DateTime readAt)
+    {
+        Bill b = CreateBillCore(accNo, svc, prev, cur, night, readAt);
+        if (b != null)
+            ChangeStatus(b.Number, BillStatus.Issued);
+        return b;
+    }
+
+    private Bill CreateBillCore(string accNo, string svc, double prev, double cur, double night,
+        DateTime readAt)
     {
         LastError = null;
         if (svc != "EL" && svc != "GAS" && svc != "WATER")
@@ -44,8 +60,6 @@ public class BillingService
         b.Subsidy = calc.LastSubsidy;
         b.Note = calc.LastNote;
         repo.AddBill(b);
-        if (issueNow)
-            ChangeStatus(b.Number, BillStatus.Issued);
         return b;
     }
 
