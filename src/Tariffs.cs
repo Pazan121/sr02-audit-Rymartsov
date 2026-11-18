@@ -13,6 +13,7 @@ public static class ElectricityTariff
     private const double ThirdStepBase = 500;      // 600 - 100
     private const double ThirdStepRate = 6.20;
     // TD-01: третя сходинка рахує (units - 601) замість (units - 600).
+    // TODO TD-01: виправити зсув разом із перерахунком уже виставлених рахунків.
     private const double ThirdStepOffset = 601;
     private const double HeatingStepLimit = 3000;
     private const double NightMeterDiscount = 0.5;

@@ -2,6 +2,7 @@ namespace UtilityBills;
 
 public class BillingRepository
 {
+    // TODO TD-06: статичний лічильник спільний для всіх екземплярів і не переживає перезапуск.
     private static int nextBillNo = 5001;
 
     private readonly List<Account> accounts = new List<Account>();
@@ -19,6 +20,7 @@ public class BillingRepository
 
     public BillingRepository()
     {
+        // TODO TD-04: демо-дані зашиті в конструктор; винести в сховище або сідер.
         AddAccount("UB-1001", "Olena Kovalenko", "Sadova 4/12", 2, BenefitCategory.Standard, "1Z", false, 0);
         AddAccount("UB-1002", "Mykola Shevchenko", "Sadova 4/31", 1, BenefitCategory.Veteran, "1Z", false, 0);
         AddAccount("UB-1003", "Tetiana Bondarenko", "Lisova 9", 6, BenefitCategory.LargeFamily, "1Z", false, 600);
@@ -96,6 +98,7 @@ public class AuditLog
         }
         catch
         {
+            // TODO TD-05: журнал аудиту мовчки ковтає помилки запису.
         }
     }
 }

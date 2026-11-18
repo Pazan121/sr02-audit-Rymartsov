@@ -19,6 +19,7 @@ public class BillCalculator
 
     // Нарахування за одну послугу за місяць, грн.
     // Повертає -1, якщо особового рахунку немає.
+    // TODO TD-03: -1/-2 як коди помилок; замінити на результат або виняток.
     // R11: усі вхідні дані зібрано в ChargeRequest, включно з швом для годинника.
     public double Charge(ChargeRequest request)
     {
@@ -61,6 +62,7 @@ public class BillCalculator
     }
 
     // Тариф за послугою: електрика має сходинки й нічний тариф, газ і вода - прості ставки.
+    // TODO TD-02: коди послуг - рядки; невідомий код мовчки рахується як вода.
     private static double CalculateBase(string service, double units, double nightReading,
         Account account, bool isHeatingSeason, bool isNightMeter)
     {

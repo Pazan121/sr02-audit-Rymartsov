@@ -100,6 +100,7 @@ public class BillingService
     }
 
     // оплата, можна частинами
+    // TODO TD-07: доменний сервіс пише в консоль; винести подання з домену.
     public bool Pay(int no, double amount)
     {
         Bill b = repo.FindBill(no);
@@ -118,6 +119,7 @@ public class BillingService
     }
 
     // прострочені - термін оплати вже минув
+    // TODO TD-08: DateTime.Today без шва - тести залежать від реальної дати.
     public int RefreshOverdue()
     {
         int marked = MarkOverdueBills();
