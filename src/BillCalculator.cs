@@ -21,28 +21,28 @@ public class BillCalculator
 
     // Нарахування за одну послугу за місяць, грн.
     // Повертає -1, якщо особового рахунку немає.
-    // Шов для тестів: today підмінює системний годинник, не змінюючи поведінку.
-    public double Charge(string accountNumber, string serviceCode, double previousReading,
-        double currentReading, double nightReading, DateTime readAt, DateTime? today = null)
+    // R11: усі вхідні дані зібрано в ChargeRequest, включно з швом для годинника.
+    public double Charge(ChargeRequest request)
     {
-        DateTime now = today ?? DateTime.Today;
+        DateTime now = request.Today ?? DateTime.Today;
         LastSubsidy = 0;
         LastUnits = 0;
         LastNote = "";
-        Account account = repository.FindAccount(accountNumber);
+        Account account = repository.FindAccount(request.AccountNumber);
         if (account == null)
         {
-            Console.WriteLine("  [calc] account " + accountNumber + " not found");
+            Console.WriteLine("  [calc] account " + request.AccountNumber + " not found");
             return -1;
         }
-        if (previousReading < 0 || currentReading < 0)
+        if (request.PreviousReading < 0 || request.CurrentReading < 0)
             return -2;
-        string service = serviceCode.Trim().ToUpper();
-        double units = currentReading - previousReading;
-        bool isStaleReading = (now.Date - readAt.Date).Days > StaleReadingDays;
+        string service = request.ServiceCode.Trim().ToUpper();
+        double units = request.CurrentReading - request.PreviousReading;
+        bool isStaleReading = (now.Date - request.ReadAt.Date).Days > StaleReadingDays;
         bool isHeatingSeason = ElectricityTariff.IsHeatingSeason(now);
-        bool isNightMeter = account.MeterType == "2Z" && nightReading > 0;
+        bool isNightMeter = account.MeterType == "2Z" && request.NightReading > 0;
         // перевіряємо, чи показник не застарий
+        double nightReading = request.NightReading;
         if (isStaleReading)
         {
             units = NormUnits(service, account.Residents);
@@ -70,8 +70,8 @@ public class BillCalculator
         }
         LastSubsidy = Math.Round(subsidy, 2);
         sum = Math.Round(sum, 2);
-        AuditLog.Write("charge " + accountNumber + " " + service + " units=" + units + " sum=" + sum
-            + " subsidy=" + LastSubsidy);
+        AuditLog.Write("charge " + request.AccountNumber + " " + service + " units=" + units
+            + " sum=" + sum + " subsidy=" + LastSubsidy);
         return sum;
     }
 

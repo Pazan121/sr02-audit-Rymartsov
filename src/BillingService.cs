@@ -38,7 +38,15 @@ public class BillingService
             LastError = "unknown service " + svc;
             return null;
         }
-        double amt = calc.Charge(accNo, svc, prev, cur, night, readAt);
+        double amt = calc.Charge(new ChargeRequest
+        {
+            AccountNumber = accNo,
+            ServiceCode = svc,
+            PreviousReading = prev,
+            CurrentReading = cur,
+            NightReading = night,
+            ReadAt = readAt
+        });
         // -1 - немає рахунку
         if (amt == -1)
         {

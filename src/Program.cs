@@ -16,23 +16,36 @@ public class Program
         Console.WriteLine("-- electricity steps, UB-1001 (single zone)");
         double[] steps = { 80, 100, 350, 600, 601, 750 };
         foreach (double k in steps)
-            Show(k + " kWh", calc.Charge("UB-1001", "EL", 0, k, 0, y));
+            Show(k + " kWh", Charge("UB-1001", "EL", 0, k, 0, y));
         Console.WriteLine("-- other charges");
-        Show("UB-1002 EL 150 kWh", calc.Charge("UB-1002", "EL", 8650, 8800, 0, y));
-        Show("UB-1005 EL 300, night 120", calc.Charge("UB-1005", "EL", 7700, 8000, 120, y));
-        Show("UB-1001 GAS 45 m3", calc.Charge("UB-1001", "GAS", 3410, 3455, 0, y));
-        Show("UB-1003 WATER 18 m3", calc.Charge("UB-1003", "WATER", 912, 930, 0, y));
+        Show("UB-1002 EL 150 kWh", Charge("UB-1002", "EL", 8650, 8800, 0, y));
+        Show("UB-1005 EL 300, night 120", Charge("UB-1005", "EL", 7700, 8000, 120, y));
+        Show("UB-1001 GAS 45 m3", Charge("UB-1001", "GAS", 3410, 3455, 0, y));
+        Show("UB-1003 WATER 18 m3", Charge("UB-1003", "WATER", 912, 930, 0, y));
         Show("UB-1002 EL, 60 days old",
-            calc.Charge("UB-1002", "EL", 8650, 9100, 0, t.AddDays(-60)));
-        Show("UB-1001 EL 5000 -> 4980", calc.Charge("UB-1001", "EL", 5000, 4980, 0, y));
-        Show("UB-9999 EL", calc.Charge("UB-9999", "EL", 0, 100, 0, y));
-        Show("UB-1001 EL 100 -> -5", calc.Charge("UB-1001", "EL", 100, -5, 0, y));
+            Charge("UB-1002", "EL", 8650, 9100, 0, t.AddDays(-60)));
+        Show("UB-1001 EL 5000 -> 4980", Charge("UB-1001", "EL", 5000, 4980, 0, y));
+        Show("UB-9999 EL", Charge("UB-9999", "EL", 0, 100, 0, y));
+        Show("UB-1001 EL 100 -> -5", Charge("UB-1001", "EL", 100, -5, 0, y));
         BillFlow(y);
         OverdueAndForecast();
     }
 
-    static void Show(string what, double amount)
+    static double Charge(string acc, string svc, double prev, double cur, double night,
+        DateTime readAt)
     {
+        return calc.Charge(new ChargeRequest
+        {
+            AccountNumber = acc,
+            ServiceCode = svc,
+            PreviousReading = prev,
+            CurrentReading = cur,
+            NightReading = night,
+            ReadAt = readAt
+        });
+    }
+
+    static void Show(string what, double amount)    {
         string extra = "";
         if (calc.LastSubsidy > 0)
             extra = ", subsidy " + calc.LastSubsidy;
