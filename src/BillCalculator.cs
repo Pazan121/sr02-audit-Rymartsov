@@ -22,7 +22,7 @@ public class BillCalculator
     // R11: усі вхідні дані зібрано в ChargeRequest, включно з швом для годинника.
     public double Charge(ChargeRequest request)
     {
-        DateTime now = request.Today ?? DateTime.Today;
+        DateTime now = request.ResolveToday();
         LastSubsidy = 0;
         LastUnits = 0;
         LastNote = "";
@@ -49,27 +49,38 @@ public class BillCalculator
         }
         LastUnits = units;
 
-        double sum;
-        if (service == "EL")
-            sum = CalculateElectricity(units, nightReading, account,
-                isHeatingSeason, isNightMeter);
-        else if (service == "GAS")
-            sum = GasTariff.Calculate(units);
-        else
-            sum = WaterTariff.Calculate(units);
-
+        double sum = CalculateBase(service, units, nightReading, account,
+            isHeatingSeason, isNightMeter);
         // пільги: ЧАЕС -50%, УБД і багатодітні -25%
         sum = ApplyBenefit(account, sum);
-        double subsidy = 0;
-        if (account.SubsidyCap > 0 && sum > account.SubsidyCap)
-        {
-            subsidy = sum - account.SubsidyCap;
-            sum = account.SubsidyCap;
-        }
-        LastSubsidy = Math.Round(subsidy, 2);
+        sum = ApplySubsidy(account, sum);
         sum = Math.Round(sum, 2);
         AuditLog.Write("charge " + request.AccountNumber + " " + service + " units=" + units
             + " sum=" + sum + " subsidy=" + LastSubsidy);
+        return sum;
+    }
+
+    // Тариф за послугою: електрика має сходинки й нічний тариф, газ і вода - прості ставки.
+    private static double CalculateBase(string service, double units, double nightReading,
+        Account account, bool isHeatingSeason, bool isNightMeter)
+    {
+        if (service == "EL")
+            return CalculateElectricity(units, nightReading, account,
+                isHeatingSeason, isNightMeter);
+        if (service == "GAS")
+            return GasTariff.Calculate(units);
+        return WaterTariff.Calculate(units);
+    }
+
+    // Субсидія обрізає суму до SubsidyCap, різниця зберігається в LastSubsidy.
+    private double ApplySubsidy(Account account, double sum)
+    {
+        LastSubsidy = 0;
+        if (account.SubsidyCap > 0 && sum > account.SubsidyCap)
+        {
+            LastSubsidy = Math.Round(sum - account.SubsidyCap, 2);
+            return account.SubsidyCap;
+        }
         return sum;
     }
 
