@@ -19,26 +19,26 @@ public class BillingRepository
 
     public BillingRepository()
     {
-        AddAccount("UB-1001", "Olena Kovalenko", "Sadova 4/12", 2, "STD", "1Z", false, 0);
-        AddAccount("UB-1002", "Mykola Shevchenko", "Sadova 4/31", 1, "VET", "1Z", false, 0);
-        AddAccount("UB-1003", "Tetiana Bondarenko", "Lisova 9", 6, "LRG", "1Z", false, 600);
-        AddAccount("UB-1004", "Ivan Petrenko", "Lisova 15", 3, "STD", "1Z", true, 0);
-        AddAccount("UB-1005", "Hanna Moroz", "Sadova 6/7", 2, "CHN", "2Z", false, 250);
+        AddAccount("UB-1001", "Olena Kovalenko", "Sadova 4/12", 2, BenefitCategory.Standard, "1Z", false, 0);
+        AddAccount("UB-1002", "Mykola Shevchenko", "Sadova 4/31", 1, BenefitCategory.Veteran, "1Z", false, 0);
+        AddAccount("UB-1003", "Tetiana Bondarenko", "Lisova 9", 6, BenefitCategory.LargeFamily, "1Z", false, 600);
+        AddAccount("UB-1004", "Ivan Petrenko", "Lisova 15", 3, BenefitCategory.Standard, "1Z", true, 0);
+        AddAccount("UB-1005", "Hanna Moroz", "Sadova 6/7", 2, BenefitCategory.Chornobyl, "2Z", false, 250);
         // рахунки за минулий місяць зі старої бази
         SeedBill("UB-1002", "EL", 120, 262.8, BillStatus.Issued, -4);
         SeedBill("UB-1003", "WATER", 16, 600, BillStatus.Issued, 0);
         SeedBill("UB-1001", "GAS", 52, 451.42, BillStatus.Paid, -10);
     }
 
-    private void AddAccount(string no, string owner, string addr, int residents, string cat,
-        string meter, bool eheat, double cap)
+    private void AddAccount(string no, string owner, string addr, int residents,
+        BenefitCategory category, string meter, bool eheat, double cap)
     {
         Account a = new Account();
         a.Number = no;
         a.Owner = owner;
         a.Address = addr;
         a.Residents = residents;
-        a.Category = cat;
+        a.Category = category;
         a.MeterType = meter;
         a.ElectricHeating = eheat;
         a.SubsidyCap = cap;

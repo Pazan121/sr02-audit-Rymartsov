@@ -9,7 +9,7 @@ public class Account
     public string Owner;
     public string Address;
     public int Residents;            // зареєстровано осіб
-    public string Category = "STD";  // STD, VET, CHN, LRG
+    public BenefitCategory Category = BenefitCategory.Standard;  // STD, VET, CHN, LRG
     public string MeterType = "1Z";  // 1Z - однозонний, 2Z - день/ніч
     public bool ElectricHeating;
     public double SubsidyCap;        // max to pay per bill with subsidy, 0 = none

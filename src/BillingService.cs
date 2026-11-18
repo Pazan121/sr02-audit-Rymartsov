@@ -168,10 +168,7 @@ public class BillingService
             return false;
         double sum = ElectricityTariff.Calculate(u);
         Account a = repo.FindAccount(b.AccountNo);
-        if (a.Category == "CHN")
-            sum = sum * 0.5;
-        else if (a.Category == "VET" || a.Category == "LRG")
-            sum = sum * 0.75;
+        sum = a.Category.Apply(sum);
         double subsidy = 0;
         if (a.SubsidyCap > 0 && sum > a.SubsidyCap)
         {

@@ -40,19 +40,12 @@ public class ReportService
         double sum = ElectricityTariff.Calculate(kwh);
         Console.WriteLine("  forecast " + a.Number + ", " + kwh + " kWh: about "
             + Math.Round(sum, 2) + " UAH");
-        if (a.Category != "STD")
+        if (a.Category != BenefitCategory.Standard)
             Console.WriteLine("    (" + CategoryName(a.Category) + " not included)");
     }
 
-    public static string CategoryName(string cat)
+    public static string CategoryName(BenefitCategory category)
     {
-        switch (cat)
-        {
-            case "VET": return "combat veteran -25%";
-            case "CHN": return "Chornobyl -50%";
-            case "LRG": return "large family -25%";
-            case "STD": return "standard";
-        }
-        return cat;
+        return category.DisplayName;
     }
 }

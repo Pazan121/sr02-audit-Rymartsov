@@ -2,8 +2,6 @@ namespace UtilityBills;
 
 public class BillCalculator
 {
-    private const double ChornobylDiscount = 0.5;
-    private const double StandardBenefitDiscount = 0.75;
     private const int StaleReadingDays = 45;
     private const double PenaltyDailyRate = 0.001;
     private const double PenaltyCapShare = 0.1;
@@ -92,11 +90,7 @@ public class BillCalculator
 
     private static double ApplyBenefit(Account account, double sum)
     {
-        if (account.Category == "CHN")
-            return sum * ChornobylDiscount;
-        if (account.Category == "VET" || account.Category == "LRG")
-            return sum * StandardBenefitDiscount;
-        return sum;
+        return account.Category.Apply(sum);
     }
 
     // норма на місяць, якщо показник не передали
