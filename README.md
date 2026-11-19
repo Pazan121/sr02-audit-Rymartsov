@@ -65,10 +65,3 @@ git worktree remove ..\baseline
 
 Незмінність поведінки: `docs/out-before.txt` і `docs/out-after.txt` побайтово
 однакові (1971 байт), 43 тести зелені на обох тегах, покриття не впало.
-
-## Публікація
-
-```
-git remote add origin https://github.com/<логін>/sr02-audit-Rymartsov.git
-git push -u origin master --tags
-```
